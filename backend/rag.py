@@ -1,0 +1,37 @@
+from langchain_ollama import OllamaEmbeddings
+from langchain_ollama import OllamaLLM
+from langchain.schema.runnable import RunnablePassthrough
+from langchain_chroma import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+# from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.output_parsers import StrOutputParser
+
+loader = PyPDFLoader("backend/data/02_Git&Git Hub.pdf")
+document = loader.load()
+
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
+chunks = text_splitter.split_documents(documents=document)
+embbedding = OllamaEmbeddings(model="mxbai-embed-large")
+
+vectorstore = Chroma.from_documents(embedding=embbedding, documents=chunks)
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system","ใช้ข้อมูลภายในเอกสารที่เกี่ยวตอบเท่่านั้น หากคำถามไม่เกี่ยวข้่องกับข้อมูลที่มีให้ตอบกลับว่ามีข้อมูลไม่เพียงพอ"),
+        ("human","คำถาม : {question}, เอกสารที่เกี่ยวข้อง : {context}"),
+    ]
+)
+
+llama = OllamaLLM(model="llama3.2", temperature=0.3)
+retrievers = vectorstore.as_retriever()
+chain = (
+    {"context" : retrievers, "question" : RunnablePassthrough()} 
+    | prompt
+    | llama
+    | StrOutputParser()
+)
+
+result = chain.invoke("อยากสร้าง branch ใหม่ใน git ทำยังไง branch ชื่อ Hello")
+print(result)

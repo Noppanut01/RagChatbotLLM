@@ -14,8 +14,8 @@ app.add_middleware(
 class Query(BaseModel):
     question: str
 
-@app.post("/chat")
-async def chat(query: Query):
+@app.post("/prompt")
+async def prompt(query: Query):
     # ตัวอย่างตอบกลับ
     return {"answer": f"คุณถามว่า: {query.question}"}
 
