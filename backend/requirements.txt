@@ -2,7 +2,10 @@ langchain
 langchain_ollama
 langchain_community
 fastapi
-uvicorn
+uvicorn[standard]
 pypdf
 chromadb
 langchain-chroma
+pydantic
+logging
+python-multipart
