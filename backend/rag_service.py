@@ -8,8 +8,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import LLMChainExtractor
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import logging
+import uuid
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -49,8 +51,8 @@ class RAGService:
         # Initialize components
         self.embedding = None
         self.llm = None
-        self.vectorstore = None
-        self.chain = None
+        self.vectorstores = {}  # Dict of vectorstores by doc_id
+        self.documents = {}     # Document metadata by doc_id
         
         logger.info(f"RAG Service initialized with LLM: {llm_model}")
     
@@ -65,69 +67,13 @@ class RAGService:
             self.llm = OllamaLLM(model=self.llm_model, temperature=self.temperature)
             logger.info(f"✅ LLM model loaded: {self.llm_model}")
             
-            # Try to load existing vectorstore
-            if os.path.exists(self.persist_directory):
-                self.vectorstore = Chroma(
-                    embedding_function=self.embedding,
-                    persist_directory=self.persist_directory
-                )
-                logger.info(f"✅ Loaded existing vector database from {self.persist_directory}")
-            else:
-                logger.warning(f"⚠️ Vector database not found at {self.persist_directory}")
-                self.vectorstore = None
-            
-            # Create RAG chain if vectorstore exists
-            if self.vectorstore:
-                self._create_rag_chain()
+            # Note: vectorstores will be loaded on-demand when documents are added
+            logger.info(f"✅ Components initialized, ready for document loading")
                 
         except Exception as e:
             logger.error(f"❌ Error initializing components: {str(e)}")
             raise
     
-    def _create_rag_chain(self):
-        """Create RAG chain for question answering"""
-        try:
-            # Create prompt template
-            prompt = ChatPromptTemplate.from_messages([
-                (
-                    "system",
-                    "คุณคือแชทบอทที่ตอบคำถามจากเอกสารที่ให้มา "
-                    "ห้ามใช้ความรู้ภายนอก ถ้าไม่พบคำตอบให้ตอบว่า 'ไม่มีข้อมูล' แต่สามารถให้คำแนะนำทั่วไปหรือบอกขอบเขตความรู้ที่มีได้\n\n"
-                    "ถ้าพบคำตอบ ให้ตอบโดยอ้างอิงตามเนื้อหาในเอกสาร "
-                    "และควรบอกส่วนหัวข้อ/section ถ้ามี"
-                ),
-                (
-                    "human",
-                    "คำถาม: {question}\n\nเอกสารที่เกี่ยวข้อง:\n{context}"
-                ),
-            ])
-            
-            # Create retriever with compression
-            compressor = LLMChainExtractor.from_llm(self.llm)
-            
-            retrievers = self.vectorstore.as_retriever(
-                search_type="mmr",
-                search_kwargs={"k": 5, "fetch_k": 20}
-            )
-            
-            compression_retriever = ContextualCompressionRetriever(
-                base_compressor=compressor, 
-                base_retriever=retrievers
-            )
-            
-            # Create chain
-            self.chain = (
-                {"context": retrievers, "question": RunnablePassthrough()}
-                | prompt
-                | self.llm
-                | StrOutputParser()
-            )
-            
-            logger.info("✅ RAG chain created successfully")
-            
-        except Exception as e:
-            logger.error(f"❌ Error creating RAG chain: {str(e)}")
-            raise
     
     def load_document(self, file_path: str) -> bool:
         """
@@ -161,16 +107,30 @@ class RAGService:
             chunks = text_splitter.split_documents(documents=documents)
             logger.info(f"✅ Document split into {len(chunks)} chunks")
             
-            # Create vector database
-            self.vectorstore = Chroma.from_documents(
+            # Generate doc_id and create separate vectorstore for this document
+            doc_id = str(uuid.uuid4())[:8]
+            title = os.path.basename(file_path)
+            
+            # Create separate collection for this document
+            collection_name = f"doc_{doc_id}"
+            vectorstore = Chroma.from_documents(
                 embedding=self.embedding,
                 documents=chunks,
+                collection_name=collection_name,
                 persist_directory=self.persist_directory
             )
-            logger.info(f"✅ Vector database created at {self.persist_directory}")
             
-            # Create RAG chain
-            self._create_rag_chain()
+            # Store vectorstore and metadata
+            self.vectorstores[doc_id] = vectorstore
+            self.documents[doc_id] = {
+                "title": title,
+                "file_path": file_path,
+                "chunks": len(chunks),
+                "created_at": datetime.now().isoformat()
+            }
+            
+            logger.info(f"✅ Document added with ID: {doc_id} ({len(chunks)} chunks)")
+            logger.info(f"✅ Total documents: {len(self.vectorstores)}")
             
             return True
             
@@ -178,38 +138,186 @@ class RAGService:
             logger.error(f"❌ Error loading document: {str(e)}")
             return False
     
-    def ask_question(self, question: str) -> Dict[str, Any]:
-        """
-        Ask question and get answer from RAG system
-        
-        Args:
-            question: คำถามที่ต้องการถาม
-            
-        Returns:
-            Dict containing answer and metadata
-        """
+    
+    
+    def add_document(self, file_path: str, title: str = None) -> Dict[str, Any]:
+        """เพิ่มเอกสารใหม่"""
         try:
-            # Initialize if not done
-            if not self.chain:
-                if not self.embedding or not self.llm:
-                    self._initialize_components()
-                if not self.chain:
-                    return {
-                        "success": False,
-                        "answer": "ระบบยังไม่พร้อมใช้งาน กรุณาอัปโหลดเอกสารก่อน",
-                        "error": "No documents loaded"
+            # Initialize components if needed
+            if not self.embedding or not self.llm:
+                self._initialize_components()
+            
+            if not os.path.exists(file_path):
+                return {"success": False, "error": f"File not found: {file_path}"}
+            
+            if not title:
+                title = os.path.basename(file_path)
+
+            doc_id = str(uuid.uuid4())[:8]  # short ID
+
+            # โหลดเอกสาร (ใช้โค้ดเดิมจาก load_document)
+            loader = PyPDFLoader(file_path)
+            documents = loader.load()
+
+            # แยก chunks
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=self.chunk_size,
+                chunk_overlap=self.chunk_overlap
+            )
+            chunks = text_splitter.split_documents(documents)
+
+            # สร้าง collection แยก
+            collection_name = f"doc_{doc_id}"
+            vectorstore = Chroma.from_documents(
+                embedding=self.embedding,
+                documents=chunks,
+                collection_name=collection_name,
+                persist_directory=self.persist_directory
+            )
+
+            # เก็บข้อมูล
+            self.vectorstores[doc_id] = vectorstore
+            self.documents[doc_id] = {
+                "title": title,
+                "file_path": file_path,
+                "chunks": len(chunks),
+                "created_at": datetime.now().isoformat()
+            }
+
+            return {"success": True, "doc_id": doc_id, "title": title}
+
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def list_documents(self) -> Dict[str, Any]:
+        """แสดงรายการเอกสารทั้งหมด"""
+        try:
+            documents_list = []
+            for doc_id, metadata in self.documents.items():
+                documents_list.append({
+                    "doc_id": doc_id,
+                    "title": metadata["title"],
+                    "chunks": metadata["chunks"],
+                    "created_at": metadata["created_at"]
+                })
+            
+            return {
+                "success": True,
+                "documents": documents_list,
+                "total": len(documents_list)
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def remove_document(self, doc_id: str) -> Dict[str, Any]:
+        """ลบเอกสาร"""
+        try:
+            if doc_id not in self.vectorstores:
+                return {"success": False, "error": f"Document {doc_id} not found"}
+            
+            # Remove from memory
+            del self.vectorstores[doc_id]
+            title = self.documents[doc_id]["title"]
+            del self.documents[doc_id]
+            
+            logger.info(f"✅ Removed document: {doc_id} ({title})")
+            logger.info(f"✅ Remaining documents: {len(self.vectorstores)}")
+            
+            return {
+                "success": True, 
+                "message": f"Document '{title}' removed successfully",
+                "remaining": len(self.vectorstores)
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def ask_question(self, question: str) -> Dict[str, Any]:
+        """ตอบคำถามแบบ multi-document พร้อม source attribution"""
+        try:
+            # Initialize components if needed
+            if not self.embedding or not self.llm:
+                self._initialize_components()
+            
+            # Check if any documents are loaded
+            if not self.vectorstores:
+                return {
+                    "success": False,
+                    "answer": "ไม่มีเอกสารในระบบ กรุณาอัปโหลดเอกสารก่อน",
+                    "error": "No documents loaded"
+                }
+
+            # Search across all vectorstores with scoring
+            all_results = []
+            source_mapping = {}  # Map document content to source
+
+            for doc_id, vectorstore in self.vectorstores.items():
+                # Get results with scores
+                results = vectorstore.similarity_search_with_score(question, k=3)
+                for doc, score in results:
+                    all_results.append((doc, score, doc_id))
+                    # Map content to source for attribution
+                    source_mapping[doc.page_content] = {
+                        "doc_id": doc_id,
+                        "title": self.documents[doc_id]["title"],
+                        "score": score
                     }
+
+            if not all_results:
+                return {
+                    "success": False,
+                    "answer": "ไม่พบข้อมูลที่เกี่ยวข้องกับคำถาม"
+                }
+
+            # Sort by relevance score (lower is better for similarity)
+            all_results.sort(key=lambda x: x[1])
             
-            # Get answer
-            answer = self.chain.invoke(question)
-            
+            # Take top 5 most relevant chunks
+            top_results = all_results[:5]
+            context_parts = []
+            used_sources = set()
+
+            for doc, score, doc_id in top_results:
+                context_parts.append(f"[จากเอกสาร: {self.documents[doc_id]['title']}]\n{doc.page_content}")
+                used_sources.add(doc_id)
+
+            context = "\n\n---\n\n".join(context_parts)
+
+            # Create prompt template
+            prompt = ChatPromptTemplate.from_messages([
+                (
+                    "system",
+                    "คุณคือแชทบอทที่ตอบคำถามจากเอกสารที่ให้มา "
+                    "ห้ามใช้ความรู้ภายนอก ถ้าไม่พบคำตอบให้ตอบว่า 'ไม่มีข้อมูล' "
+                    "ถ้าพบคำตอบ ให้ตอบโดยอ้างอิงตามเนื้อหาในเอกสาร "
+                    "และควรระบุชื่อเอกสารที่อ้างอิงด้วย"
+                ),
+                (
+                    "human",
+                    "คำถาม: {question}\n\nเอกสารที่เกี่ยวข้อง:\n{context}"
+                ),
+            ])
+
+            # Generate answer
+            chain = prompt | self.llm | StrOutputParser()
+            answer = chain.invoke({"question": question, "context": context})
+
+            # Prepare sources information
+            sources = []
+            for doc_id in used_sources:
+                sources.append({
+                    "doc_id": doc_id,
+                    "title": self.documents[doc_id]["title"]
+                })
+
             return {
                 "success": True,
                 "answer": answer,
                 "question": question,
-                "model": self.llm_model
+                "sources": sources,
+                "model": self.llm_model,
+                "total_documents_searched": len(self.vectorstores)
             }
-            
+
         except Exception as e:
             logger.error(f"❌ Error answering question: {str(e)}")
             return {
@@ -223,7 +331,15 @@ class RAGService:
         return {
             "llm_model": self.llm_model,
             "embedding_model": self.embedding_model,
-            "vectorstore_ready": self.vectorstore is not None,
-            "chain_ready": self.chain is not None,
+            "components_ready": self.embedding is not None and self.llm is not None,
+            "total_documents": len(self.vectorstores),
+            "documents": [
+                {
+                    "doc_id": doc_id, 
+                    "title": meta["title"],
+                    "chunks": meta["chunks"]
+                } 
+                for doc_id, meta in self.documents.items()
+            ],
             "persist_directory": self.persist_directory
         }

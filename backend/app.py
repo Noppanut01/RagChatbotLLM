@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,UploadFile, File
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from rag_service import RAGService
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +42,8 @@ class RAGResponse(BaseModel):
     answer: str
     question: str = None
     model: str = None
+    sources: list = None
+    total_documents_searched: int = None
     error: str = None
 
 class StatusResponse(BaseModel):
@@ -52,12 +55,29 @@ async def startup_event():
     """Initialize RAG service on startup"""
     logger.info("🚀 Starting RAG Chatbot API...")
     
-    # Try to load existing document
-    document_path = "./data/02_Git&Git Hub.pdf"
-    if rag_service.load_document(document_path):
-        logger.info("✅ RAG Service initialized with existing document")
+    # Try to load test documents from data/test directory
+    test_documents = [
+        "./data/test/Fertilizer_001.pdf",
+        "./data/test/Insect_001.pdf", 
+        "./data/test/technology_rice_001.pdf"
+    ]
+    
+    loaded_count = 0
+    for doc_path in test_documents:
+        try:
+            result = rag_service.add_document(doc_path)
+            if result["success"]:
+                loaded_count += 1
+                logger.info(f"✅ Loaded: {result['title']} (ID: {result['doc_id']})")
+            else:
+                logger.warning(f"⚠️ Failed to load {doc_path}: {result['error']}")
+        except Exception as e:
+            logger.warning(f"⚠️ Error loading {doc_path}: {str(e)}")
+    
+    if loaded_count > 0:
+        logger.info(f"✅ RAG Service initialized with {loaded_count} documents")
     else:
-        logger.warning("⚠️ No document loaded. RAG service ready but no knowledge base.")
+        logger.warning("⚠️ No documents loaded. RAG service ready but no knowledge base.")
 
 @app.get("/")
 async def root():
@@ -74,7 +94,7 @@ async def health_check():
     try:
         rag_status = rag_service.get_status()
         return StatusResponse(
-            status="healthy" if rag_status["chain_ready"] else "initializing",
+            status="healthy" if rag_status["components_ready"] and rag_status["total_documents"] > 0 else "initializing",
             rag_service=rag_status
         )
     except Exception as e:
@@ -99,13 +119,15 @@ async def prompt(query: Query):
                 success=True,
                 answer=result["answer"],
                 question=result["question"],
-                model=result["model"]
+                model=result["model"],
+                sources=result.get("sources", []),
+                total_documents_searched=result.get("total_documents_searched", 0)
             )
         else:
             logger.error(f"❌ RAG service error: {result.get('error', 'Unknown error')}")
             return RAGResponse(
                 success=False,
-                answer=result["answer"],
+                answer=result.get("answer", "เกิดข้อผิดพลาด"),
                 error=result.get("error")
             )
             
@@ -119,3 +141,30 @@ async def prompt(query: Query):
         )
 
 
+@app.post("/upload/")
+async def create_upload_files(files: List[UploadFile] = File(...)):
+    path = "./upload"
+    uploaded_filenames = []
+
+    if os.path.exists(path=path):
+        for file in files:
+            # You can access file details like filename, content_type, and the file object
+            filename = file.filename
+            content_type = file.content_type
+            # Example: Save the file to disk (asynchronous operation)
+            with open(f"{path}/{filename}", "wb") as buffer:
+                buffer.write(await file.read())
+            uploaded_filenames.append(filename)    
+    else:
+        os.makedirs(path)
+        for file in files:
+            # You can access file details like filename, content_type, and the file object
+            filename = file.filename
+            content_type = file.content_type
+            # Example: Save the file to disk (asynchronous operation)
+            with open(f"{path}/{filename}", "wb") as buffer:
+                buffer.write(await file.read())
+            uploaded_filenames.append(filename)    
+
+    
+    return {"message": f"Successfully uploaded files: {', '.join(uploaded_filenames)}"}
