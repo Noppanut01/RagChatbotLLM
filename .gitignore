@@ -3,6 +3,7 @@
 ./venv
 .claude
 *.md
+!README.md
 .vscode
 *.env
 *.pdf
