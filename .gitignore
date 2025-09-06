@@ -1,8 +1,9 @@
 .DS_Store
-backend/__pycache__
+./backend/__pycache__
 ./venv
 .claude
-.md
+*.md
 .vscode
-.env
-.pdf
+*.env
+*.pdf
+backend/chroma_store/
