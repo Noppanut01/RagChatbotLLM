@@ -3,5 +3,6 @@ backend/__pycache__
 ./venv
 .claude
 .md
-./backend/data/
-./backend/upload/
+.vscode
+.env
+.pdf
