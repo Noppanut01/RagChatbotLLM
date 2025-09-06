@@ -7,5 +7,5 @@ pypdf
 chromadb
 langchain-chroma
 pydantic
-logging
 python-multipart
+python-dotenv

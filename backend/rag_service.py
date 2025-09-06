@@ -5,17 +5,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import StrOutputParser
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import LLMChainExtractor
 import os
-from typing import Optional, Dict, Any, List
-import logging
+from typing import Dict, Any
 import uuid
 from datetime import datetime
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class RAGService:
     """
@@ -24,12 +21,13 @@ class RAGService:
     """
     
     def __init__(self, 
-        llm_model: str = "llama3.2",
-        embedding_model: str = "mxbai-embed-large",
-        persist_directory: str = "./chroma_store",
-        chunk_size: int = 1000,
-        chunk_overlap: int = 50,
-        temperature: float = 0.3):
+        llm_model: str = os.getenv("OLLAMA_LLM_MODEL"),
+        embedding_model: str = os.getenv("OLLAMA_EMBEDDING_MODEL"),
+        persist_directory: str = os.getenv("CHROMA_PERSIST_DIRECTORY"),
+        chunk_size: int = int(os.getenv("CHUNK_SIZE", "1000")),
+        chunk_overlap: int = int(os.getenv("CHUNK_OVERLAP", "200")),
+        temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+        ):
         """
         Initialize RAG Service
         
@@ -54,24 +52,24 @@ class RAGService:
         self.vectorstores = {}  # Dict of vectorstores by doc_id
         self.documents = {}     # Document metadata by doc_id
         
-        logger.info(f"RAG Service initialized with LLM: {llm_model}")
+        print(f"RAG Service initialized with LLM: {llm_model}")
     
     def _initialize_components(self):
         """Initialize LangChain components"""
         try:
             # Initialize embeddings
             self.embedding = OllamaEmbeddings(model=self.embedding_model)
-            logger.info(f"✅ Embedding model loaded: {self.embedding_model}")
+            print(f"Embedding model loaded: {self.embedding_model}")
             
             # Initialize LLM
             self.llm = OllamaLLM(model=self.llm_model, temperature=self.temperature)
-            logger.info(f"✅ LLM model loaded: {self.llm_model}")
+            print(f"LLM model loaded: {self.llm_model}")
             
             # Note: vectorstores will be loaded on-demand when documents are added
-            logger.info(f"✅ Components initialized, ready for document loading")
+            print(f"Components initialized, ready for document loading")
                 
         except Exception as e:
-            logger.error(f"❌ Error initializing components: {str(e)}")
+            print(f"Error initializing components: {str(e)}")
             raise
     
     
@@ -87,7 +85,7 @@ class RAGService:
         """
         try:
             if not os.path.exists(file_path):
-                logger.error(f"❌ File not found: {file_path}")
+                print(f"File not found: {file_path}")
                 return False
                 
             # Initialize components if not done
@@ -97,7 +95,7 @@ class RAGService:
             # Load document
             loader = PyPDFLoader(file_path)
             documents = loader.load()
-            logger.info(f"✅ Loaded document: {file_path} ({len(documents)} pages)")
+            print(f"Loaded document: {file_path} ({len(documents)} pages)")
             
             # Split documents
             text_splitter = RecursiveCharacterTextSplitter(
@@ -105,7 +103,7 @@ class RAGService:
                 chunk_overlap=self.chunk_overlap
             )
             chunks = text_splitter.split_documents(documents=documents)
-            logger.info(f"✅ Document split into {len(chunks)} chunks")
+            print(f"Document split into {len(chunks)} chunks")
             
             # Generate doc_id and create separate vectorstore for this document
             doc_id = str(uuid.uuid4())[:8]
@@ -129,13 +127,13 @@ class RAGService:
                 "created_at": datetime.now().isoformat()
             }
             
-            logger.info(f"✅ Document added with ID: {doc_id} ({len(chunks)} chunks)")
-            logger.info(f"✅ Total documents: {len(self.vectorstores)}")
+            print(f"Document added with ID: {doc_id} ({len(chunks)} chunks)")
+            print(f"Total documents: {len(self.vectorstores)}")
             
             return True
             
         except Exception as e:
-            logger.error(f"❌ Error loading document: {str(e)}")
+            print(f"Error loading document: {str(e)}")
             return False
     
     
@@ -220,8 +218,8 @@ class RAGService:
             title = self.documents[doc_id]["title"]
             del self.documents[doc_id]
             
-            logger.info(f"✅ Removed document: {doc_id} ({title})")
-            logger.info(f"✅ Remaining documents: {len(self.vectorstores)}")
+            print(f"Removed document: {doc_id} ({title})")
+            print(f"Remaining documents: {len(self.vectorstores)}")
             
             return {
                 "success": True, 
@@ -319,7 +317,7 @@ class RAGService:
             }
 
         except Exception as e:
-            logger.error(f"❌ Error answering question: {str(e)}")
+            print(f"Error answering question: {str(e)}")
             return {
                 "success": False,
                 "answer": "เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง",
