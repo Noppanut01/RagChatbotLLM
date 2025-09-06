@@ -2,37 +2,16 @@ from fastapi import FastAPI, HTTPException,UploadFile, File
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from rag_service import RAGService
-import logging
 from typing import Dict, Any, List
 import os
+from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = FastAPI(
-    title="RAG Chatbot API",
-    description="API สำหรับ RAG Chatbot ตอบคำถามจากเอกสาร PDF",
-    version="1.0.0"
-)
-
-# CORS Configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React dev server
-        "http://localhost:5173",  # Vite dev server
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+load_dotenv()
 
 # Initialize RAG Service
 rag_service = RAGService()
-
+path = os.getenv("UPLOAD_DIR")
 # Pydantic Models
 class Query(BaseModel):
     question: str
@@ -50,35 +29,61 @@ class StatusResponse(BaseModel):
     status: str
     rag_service: Dict[str, Any]
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize RAG service on startup"""
-    logger.info("🚀 Starting RAG Chatbot API...")
-    
-    # Try to load test documents from data/test directory
-    test_documents = [
-        "./data/test/Fertilizer_001.pdf",
-        "./data/test/Insect_001.pdf", 
-        "./data/test/technology_rice_001.pdf"
-    ]
-    
+def loadFiles(docs):
+    print(docs)
     loaded_count = 0
-    for doc_path in test_documents:
+    for doc in docs:
         try:
-            result = rag_service.add_document(doc_path)
+            abs_path = path + "/" + doc
+            result = rag_service.add_document(abs_path)
             if result["success"]:
                 loaded_count += 1
-                logger.info(f"✅ Loaded: {result['title']} (ID: {result['doc_id']})")
+                print(f"Loaded: {result['title']} (ID: {result['doc_id']})")
             else:
-                logger.warning(f"⚠️ Failed to load {doc_path}: {result['error']}")
+                print(f"Failed to load {doc}: {result['error']}")
         except Exception as e:
-            logger.warning(f"⚠️ Error loading {doc_path}: {str(e)}")
+            print(f"Error loading {doc}: {str(e)}")
     
     if loaded_count > 0:
-        logger.info(f"✅ RAG Service initialized with {loaded_count} documents")
+        return f"RAG Service initialized with {loaded_count} documents"
     else:
-        logger.warning("⚠️ No documents loaded. RAG service ready but no knowledge base.")
+        return "No documents loaded. RAG service ready but no knowledge base."
+    
+@asynccontextmanager
+async def startup_event(app:FastAPI):
+    """Initialize RAG service on startup"""
+    print("Starting RAG Chatbot API...")
+    
+    # Try to load test documents from data/test directory
+    if os.path.exists(path):
+        docs = os.listdir(path)
+    else:
+        os.makedirs(path)
+    loadFiles(docs)
+    yield  # App runs here
+    print("shutdown")
 
+
+app = FastAPI(
+    title="RAG Chatbot API",
+    description="API สำหรับ RAG Chatbot ตอบคำถามจากเอกสาร PDF",
+    version="1.0.0",
+    lifespan=startup_event
+)
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # React dev server
+        "http://localhost:5173",  # Vite dev server
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -98,7 +103,7 @@ async def health_check():
             rag_service=rag_status
         )
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
+        print(f"Health check failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/prompt", response_model=RAGResponse)
@@ -108,13 +113,13 @@ async def prompt(query: Query):
         if not query.question or query.question.strip() == "":
             raise HTTPException(status_code=400, detail="Question cannot be empty")
         
-        logger.info(f"📝 Question received: {query.question}")
+        print(f"Question received: {query.question}")
         
         # Get answer from RAG service
         result = rag_service.ask_question(query.question)
         
         if result["success"]:
-            logger.info(f"✅ Answer generated successfully")
+            print(f"Answer generated successfully")
             return RAGResponse(
                 success=True,
                 answer=result["answer"],
@@ -124,7 +129,7 @@ async def prompt(query: Query):
                 total_documents_searched=result.get("total_documents_searched", 0)
             )
         else:
-            logger.error(f"❌ RAG service error: {result.get('error', 'Unknown error')}")
+            print(f"RAG service error: {result.get('error', 'Unknown error')}")
             return RAGResponse(
                 success=False,
                 answer=result.get("answer", "เกิดข้อผิดพลาด"),
@@ -134,7 +139,7 @@ async def prompt(query: Query):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Unexpected error in prompt endpoint: {str(e)}")
+        print(f"Unexpected error in prompt endpoint: {str(e)}")
         raise HTTPException(
             status_code=500, 
             detail="เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง"
@@ -143,28 +148,22 @@ async def prompt(query: Query):
 
 @app.post("/upload/")
 async def create_upload_files(files: List[UploadFile] = File(...)):
-    path = "./upload"
     uploaded_filenames = []
-
-    if os.path.exists(path=path):
-        for file in files:
-            # You can access file details like filename, content_type, and the file object
-            filename = file.filename
-            content_type = file.content_type
-            # Example: Save the file to disk (asynchronous operation)
-            with open(f"{path}/{filename}", "wb") as buffer:
-                buffer.write(await file.read())
-            uploaded_filenames.append(filename)    
-    else:
-        os.makedirs(path)
-        for file in files:
-            # You can access file details like filename, content_type, and the file object
-            filename = file.filename
-            content_type = file.content_type
-            # Example: Save the file to disk (asynchronous operation)
-            with open(f"{path}/{filename}", "wb") as buffer:
-                buffer.write(await file.read())
-            uploaded_filenames.append(filename)    
-
+    loaded_files = []
     
-    return {"message": f"Successfully uploaded files: {', '.join(uploaded_filenames)}"}
+    for file in files:
+        filename = file.filename
+        file_path = f"{path}/{filename}"
+        
+        # Save file to disk
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+        uploaded_filenames.append(filename)
+        
+        # Load document into RAG service immediately
+        loadFiles(uploaded_filenames)
+    
+    return {
+        "message": f"Successfully uploaded files: {', '.join(uploaded_filenames)}",
+        "loaded_documents": loaded_files
+    }
