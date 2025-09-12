@@ -1,6 +1,6 @@
 .DS_Store
 ./backend/__pycache__
-./venv
+venv
 .claude
 .vscode
 *.pdf

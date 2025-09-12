@@ -29,6 +29,18 @@ class StatusResponse(BaseModel):
     status: str
     rag_service: Dict[str, Any]
 
+class DocumentListResponse(BaseModel):
+    success: bool
+    documents: List[Dict[str, Any]] = None
+    total: int = None
+    error: str = None
+
+class DocumentDeleteResponse(BaseModel):
+    success: bool
+    message: str = None
+    remaining: int = None
+    error: str = None
+
 def loadFiles(docs):
     print(docs)
     loaded_count = 0
@@ -53,7 +65,7 @@ def loadFiles(docs):
 async def startup_event(app:FastAPI):
     """Initialize RAG service on startup"""
     print("Starting RAG Chatbot API...")
-    
+    docs = []    
     # Try to load test documents from data/test directory
     if os.path.exists(path):
         docs = os.listdir(path)
@@ -167,3 +179,53 @@ async def create_upload_files(files: List[UploadFile] = File(...)):
         "message": f"Successfully uploaded files: {', '.join(uploaded_filenames)}",
         "loaded_documents": loaded_files
     }
+
+@app.get("/documents/list", response_model=DocumentListResponse)
+async def list_documents():
+    """Get list of all loaded documents"""
+    try:
+        result = rag_service.list_documents()
+        
+        if result["success"]:
+            return DocumentListResponse(
+                success=True,
+                documents=result["documents"],
+                total=result["total"]
+            )
+        else:
+            return DocumentListResponse(
+                success=False,
+                error=result.get("error", "Unknown error")
+            )
+            
+    except Exception as e:
+        print(f"Error listing documents: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to list documents"
+        )
+
+@app.delete("/documents/{doc_id}", response_model=DocumentDeleteResponse)
+async def delete_document(doc_id: str):
+    """Delete a specific document by ID"""
+    try:
+        result = rag_service.remove_document(doc_id)
+        
+        if result["success"]:
+            return DocumentDeleteResponse(
+                success=True,
+                message=result["message"],
+                remaining=result["remaining"]
+            )
+        else:
+            return DocumentDeleteResponse(
+                success=False,
+                error=result.get("error", "Unknown error")
+            )
+            
+    except Exception as e:
+        print(f"Error deleting document {doc_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete document {doc_id}"
+        )

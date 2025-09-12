@@ -43,27 +43,27 @@
 - Create database models (User, Document, ChatHistory, PromptTemplate)
 - Setup SQLAlchemy connection
 
-**Day 3-4: Enhanced Multi-Document RAG Service**
-- Multi-document support (รองรับเอกสารหลากหลายหัวข้อ)
-- Document metadata management
-- Generic vector store management (ไม่จำกัดหัวข้อ)
-- Source attribution system
+**Day 3-4: Enhanced Multi-Document RAG Service** ✅
+- Multi-document support (รองรับเอกสารหลากหลายหัวข้อ) ✅
+- Document metadata management ✅
+- Generic vector store management (ไม่จำกัดหัวข้อ) ✅
+- Source attribution system ✅
 
-**Day 5-7: Core APIs**
-- Authentication endpoints (/auth/login, /auth/register)
-- Document management APIs (/documents/upload, /documents/list)
-- Enhanced chat API with history
+**Day 5-7: Core APIs** ✅ (บางส่วน)
+- Authentication endpoints (/auth/login, /auth/register) ❌
+- Document management APIs (/documents/upload, /documents/list) ✅
+- Enhanced chat API with history ❌
 
 ### Week 2: Document Management
-**Day 8-9: File Upload System**
-- File upload with validation
-- Support PDF, TXT, DOCX formats
-- Background document processing
+**Day 8-9: File Upload System** ✅ (บางส่วน)
+- File upload with validation ⚠️ (มี upload แต่ไม่มี validation)
+- Support PDF, TXT, DOCX formats ⚠️ (รองรับแค่ PDF)
+- Background document processing ✅
 
-**Day 10-11: Document CRUD**
-- Complete document management
-- Reprocessing capability
-- Document search and filtering
+**Day 10-11: Document CRUD** ✅ (บางส่วน)
+- Complete document management ✅ (มี list, delete แล้ว)
+- Reprocessing capability ❌
+- Document search and filtering ❌
 
 **Day 12-14: User Management**
 - Registration/login system
@@ -130,26 +130,39 @@
 5. Develop functional chat interface
 
 ## Progress Tracking
-- [ ] Database setup complete
-- [x] **Multi-document RAG working** ✅ (2025-09-03)
-- [ ] Authentication system
-- [x] **Document upload/management** ✅ (2025-09-06) - Basic upload with auto-loading
-- [ ] Admin dashboard
-- [ ] Functional chat UI  
-- [ ] System integration testing
-- [ ] Ready for deployment
 
-### Additional Progress (2025-09-06)
-- [x] **Code cleanup & optimization** ✅
-- [x] **Auto-loading documents after upload** ✅ 
-- [x] **Application lifecycle management** ✅
-- [x] **Bug fixes & type safety** ✅
-- [ ] Document Management APIs (GET /documents/list, DELETE /documents/{id})
+### Completed Items
+- [x] **Multi-document RAG working** ✅ (2025-09-03)
+- [x] **Document upload/management** ✅ (2025-09-06) - Basic upload with auto-loading
+- [x] **Code cleanup & optimization** ✅ (2025-09-06)
+- [x] **Auto-loading documents after upload** ✅ (2025-09-06)
+- [x] **Application lifecycle management** ✅ (2025-09-06)
+- [x] **Bug fixes & type safety** ✅ (2025-09-06)
+- [x] **Document Management APIs** ✅ (2025-09-13) - GET /documents/list, DELETE /documents/{id}
+- [x] **Enhanced Multi-Document RAG Service** ✅ (2025-09-03) - Day 3-4 complete
+- [x] **Core APIs** ✅ (2025-09-13) - Document management part of Day 5-7
+- [x] **File Upload System** ✅ (2025-09-06) - Basic part of Day 8-9
+- [x] **Document CRUD** ✅ (2025-09-13) - List/Delete part of Day 10-11
+
+### Partially Completed
+- [ ] **Day 5-7: Core APIs** ⚠️ (Document APIs ✅, Auth APIs ❌, Chat API with history ❌)
+- [ ] **Day 8-9: File Upload System** ⚠️ (Upload ✅, Validation ❌, TXT/DOCX support ❌)
+- [ ] **Day 10-11: Document CRUD** ⚠️ (List/Delete ✅, Search/Filter ❌, Reprocessing ❌)
+
+### Pending Items
+- [ ] **Day 1-2: PostgreSQL Setup** - Database models, SQLAlchemy connection
+- [ ] **Authentication system** - JWT, login/register endpoints
+- [ ] **Day 12-14: User Management** - Registration/login system, roles, sessions
+- [ ] **Admin dashboard** - Document management UI
+- [ ] **Functional chat UI** - Frontend chat interface
+- [ ] **System integration testing** - Full system testing
+- [ ] **Ready for deployment** - Production deployment
 
 ## Recent Milestones
 - **2025-09-03**: Multi-document RAG core completed
 - **2025-09-06**: File upload auto-loading & code cleanup completed
+- **2025-09-13**: Document Management APIs completed (GET/DELETE endpoints)
 
 ---
 **Created**: 2025-08-31
-**Last Updated**: 2025-09-06
+**Last Updated**: 2025-09-13
