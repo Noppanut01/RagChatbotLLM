@@ -2,9 +2,6 @@
 ./backend/__pycache__
 ./venv
 .claude
-*.md
-!README.md
 .vscode
-*.env
 *.pdf
 backend/chroma_store/
