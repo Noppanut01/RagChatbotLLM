@@ -9,6 +9,7 @@ import os
 from typing import Dict, Any
 import uuid
 from datetime import datetime
+import hashlib
 
 from dotenv import load_dotenv
 
@@ -51,9 +52,10 @@ class RAGService:
         self.llm = None
         self.vectorstores = {}  # Dict of vectorstores by doc_id
         self.documents = {}     # Document metadata by doc_id
+        self.file_hashes = {}   # hash -> doc_id (for duplicate detection)
         
         print(f"RAG Service initialized with LLM: {llm_model}")
-    
+
     def _initialize_components(self):
         """Initialize LangChain components"""
         try:

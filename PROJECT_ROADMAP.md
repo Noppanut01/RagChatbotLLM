@@ -10,6 +10,12 @@
 - แสดงแหล่งที่มาของคำตอบ
 - รองรับเอกสารภาษาไทย
 - ค้นหาข้ามหลายเอกสารพร้อมกัน
+- **Chat history storage** - เก็บและแสดงประวัติการสนทนา
+- **Admin analytics dashboard** - สถิติการใช้งาน, จำนวน queries, popular documents
+- **Prompt template management** - Admin จัดการ prompt templates สำหรับ RAG
+- **User role management** - แยก Admin/User permissions
+- **Background document processing** - ประมวลผลเอกสารแบบ async
+- **Document metadata management** - เก็บข้อมูล source, upload date, file size
 
 ## Technology Stack
 - **Backend**: Python, FastAPI, SQLAlchemy, PostgreSQL
@@ -18,7 +24,7 @@
 - **Database**: PostgreSQL
 - **Authentication**: JWT
 
-## Current Status Analysis (อัปเดต: 2025-09-03)
+## Current Status Analysis (อัปเดต: 2025-09-20)
 
 ### ✅ What's Working
 - RAG core implementation with LangChain
@@ -27,13 +33,17 @@
 - ChromaDB vector database
 - Basic React frontend structure
 
-### ❌ Missing Components
-- PostgreSQL database integration
-- User authentication system
-- Document management (upload/CRUD)
-- Admin dashboard
-- Functional chat interface
-- Multi-document RAG support
+### ❌ Missing Components (Critical จาก Proposal)
+- **PostgreSQL database integration** - Main persistence layer
+- **User authentication system** - JWT login/register/roles
+- **Admin dashboard** - Document management UI, analytics, user management
+- **Functional chat interface** - Replace "Hello Chatbot" placeholder
+- **Chat history storage** - เก็บประวัติการสนทนาใน PostgreSQL
+- **Chatbot widget** - Embeddable widget สำหรับ users
+- **Prompt template management** - Admin จัดการ prompt templates
+- **Analytics dashboard** - สถิติการใช้งาน, popular queries
+- **User role management** - Admin vs User permissions
+- **Document reprocessing** - Re-index documents เมื่อมีการเปลี่ยนแปลง
 
 ## 30-Day Development Plan
 
@@ -95,10 +105,12 @@
 - Embeddable widget
 - Cross-origin support
 
-**Day 26-28: Advanced Features**
-- Prompt template management
-- Analytics dashboard
-- Auto question generation
+**Day 26-28: Advanced Features (จาก Proposal)**
+- **Prompt template management** - Admin CRUD for prompt templates
+- **Advanced analytics** - Document popularity, query patterns, user engagement
+- **Document reprocessing** - Re-index เมื่อมีการอัปเดต
+- **Auto question generation** - สร้างคำถามตัวอย่างจากเอกสาร
+- **Advanced search filters** - ค้นหาตาม document type, date range
 
 **Day 29-30: Testing & Deployment**
 - Testing
@@ -148,15 +160,26 @@
 - [ ] **Day 5-7: Core APIs** ⚠️ (Document APIs ✅, Auth APIs ❌, Chat API with history ❌)
 - [ ] **Day 10-11: Document CRUD** ⚠️ (List/Delete ✅, Search/Filter ❌ optional, Reprocessing ❌)
 
-### Pending Items
-- [ ] **Fix Duplicate Documents** - เพิ่ม duplicate check ใน upload
-- [ ] **Day 1-2: PostgreSQL Setup** - Database models, SQLAlchemy connection
-- [ ] **Authentication system** - JWT, login/register endpoints
-- [ ] **Day 12-14: User Management** - Registration/login system, roles, sessions
-- [ ] **Admin dashboard** - Document management UI
-- [ ] **Functional chat UI** - Frontend chat interface
-- [ ] **System integration testing** - Full system testing
-- [ ] **Ready for deployment** - Production deployment
+### Critical Pending Items (จาก Proposal Analysis)
+**Foundation (Week 1-2):**
+- [ ] **PostgreSQL Setup** - Database models (User, Document, ChatHistory, PromptTemplate)
+- [ ] **Authentication system** - JWT login/register/roles APIs
+- [ ] **Fix Duplicate Documents** - Hash-based duplicate detection
+- [ ] **Chat API with history** - Store conversations in PostgreSQL
+
+**User Interface (Week 3):**
+- [ ] **Admin dashboard** - Document management, user management, analytics
+- [ ] **Functional chat UI** - Replace placeholder with real chat interface
+- [ ] **Login/Register pages** - Authentication UI
+- [ ] **Protected routes** - Role-based access control
+
+**Advanced Features (Week 4):**
+- [ ] **Chatbot widget** - Embeddable widget for users (no login required)
+- [ ] **Prompt template management** - Admin CRUD interface
+- [ ] **Analytics dashboard** - Usage statistics, popular documents
+- [ ] **Document reprocessing** - Re-index capability
+- [ ] **System integration testing** - Full end-to-end testing
+- [ ] **Production deployment** - Docker, environment setup
 
 ## Recent Milestones
 - **2025-09-03**: Multi-document RAG core completed
@@ -165,10 +188,18 @@
 - **2025-09-20**: File upload validation + TXT/DOCX support completed
 
 ## Current Status Summary
-✅ **Working:** RAG system, Multi-document upload (PDF/TXT/DOCX), Document APIs
-⚠️ **Issues:** Duplicate documents, No database persistence, No authentication
-❌ **Missing:** PostgreSQL, Auth system, Admin UI, Chat UI
+✅ **Working:** RAG system, Multi-document upload (PDF/TXT/DOCX), Document APIs, Source attribution
+⚠️ **Issues:** Duplicate documents, No database persistence, No authentication, Placeholder chat UI
+❌ **Critical Missing (จาก Proposal):** PostgreSQL, Auth system, Admin dashboard, Chat history, Analytics, Prompt templates
+
+## Proposal Compliance Status
+📊 **Overall Progress:** ~65% complete
+✅ **RAG Core:** 90% (missing chat history storage)
+⚠️ **Backend APIs:** 60% (missing auth & chat history)
+❌ **Frontend UI:** 20% (basic structure only)
+❌ **Admin Features:** 10% (no dashboard, no analytics)
+❌ **Production Ready:** 30% (no auth, no persistence)
 
 ---
 **Created**: 2025-08-31
-**Last Updated**: 2025-09-20
+**Last Updated**: 2025-09-20 (Post-Proposal Analysis)
