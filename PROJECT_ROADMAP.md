@@ -63,7 +63,7 @@
 **Day 10-11: Document CRUD** ✅ (บางส่วน)
 - Complete document management ✅ (มี list, delete แล้ว)
 - Reprocessing capability ❌
-- Document search and filtering ❌
+- Document search and filtering ❌ (optional - ไม่ใช่ requirement จาก proposal)
 
 **Day 12-14: User Management**
 - Registration/login system
@@ -141,15 +141,15 @@
 - [x] **Document Management APIs** ✅ (2025-09-13) - GET /documents/list, DELETE /documents/{id}
 - [x] **Enhanced Multi-Document RAG Service** ✅ (2025-09-03) - Day 3-4 complete
 - [x] **Core APIs** ✅ (2025-09-13) - Document management part of Day 5-7
-- [x] **File Upload System** ✅ (2025-09-06) - Basic part of Day 8-9
+- [x] **File Upload System** ✅ (2025-09-20) - Upload + File validation + TXT/DOCX support
 - [x] **Document CRUD** ✅ (2025-09-13) - List/Delete part of Day 10-11
 
 ### Partially Completed
 - [ ] **Day 5-7: Core APIs** ⚠️ (Document APIs ✅, Auth APIs ❌, Chat API with history ❌)
-- [ ] **Day 8-9: File Upload System** ⚠️ (Upload ✅, Validation ❌, TXT/DOCX support ❌)
-- [ ] **Day 10-11: Document CRUD** ⚠️ (List/Delete ✅, Search/Filter ❌, Reprocessing ❌)
+- [ ] **Day 10-11: Document CRUD** ⚠️ (List/Delete ✅, Search/Filter ❌ optional, Reprocessing ❌)
 
 ### Pending Items
+- [ ] **Fix Duplicate Documents** - เพิ่ม duplicate check ใน upload
 - [ ] **Day 1-2: PostgreSQL Setup** - Database models, SQLAlchemy connection
 - [ ] **Authentication system** - JWT, login/register endpoints
 - [ ] **Day 12-14: User Management** - Registration/login system, roles, sessions
@@ -162,7 +162,13 @@
 - **2025-09-03**: Multi-document RAG core completed
 - **2025-09-06**: File upload auto-loading & code cleanup completed
 - **2025-09-13**: Document Management APIs completed (GET/DELETE endpoints)
+- **2025-09-20**: File upload validation + TXT/DOCX support completed
+
+## Current Status Summary
+✅ **Working:** RAG system, Multi-document upload (PDF/TXT/DOCX), Document APIs
+⚠️ **Issues:** Duplicate documents, No database persistence, No authentication
+❌ **Missing:** PostgreSQL, Auth system, Admin UI, Chat UI
 
 ---
 **Created**: 2025-08-31
-**Last Updated**: 2025-09-13
+**Last Updated**: 2025-09-20

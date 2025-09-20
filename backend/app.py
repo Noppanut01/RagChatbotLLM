@@ -161,23 +161,28 @@ async def prompt(query: Query):
 @app.post("/upload/")
 async def create_upload_files(files: List[UploadFile] = File(...)):
     uploaded_filenames = []
-    loaded_files = []
     
     for file in files:
         filename = file.filename
+    
+        if not filename.endswith(('.pdf', '.txt', '.docx')):
+            raise HTTPException(status_code=400, detail=f"Unsupported filetype: {filename}")
+    
         file_path = f"{path}/{filename}"
-        
+    
         # Save file to disk
         with open(file_path, "wb") as buffer:
             buffer.write(await file.read())
         uploaded_filenames.append(filename)
         
         # Load document into RAG service immediately
+        
+
         loadFiles(uploaded_filenames)
     
     return {
         "message": f"Successfully uploaded files: {', '.join(uploaded_filenames)}",
-        "loaded_documents": loaded_files
+        "loaded_documents": uploaded_filenames
     }
 
 @app.get("/documents/list", response_model=DocumentListResponse)

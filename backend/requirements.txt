@@ -9,3 +9,4 @@ langchain-chroma
 pydantic
 python-multipart
 python-dotenv
+docx2txt

@@ -2,7 +2,7 @@ from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from langchain.schema.runnable import RunnablePassthrough
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader, Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import StrOutputParser
 import os
@@ -72,7 +72,16 @@ class RAGService:
             print(f"Error initializing components: {str(e)}")
             raise
     
-    
+    def get_loader_documents(self, file_path:str) -> any:
+        if file_path.endswith(".pdf"):
+            return PyPDFLoader(file_path=file_path)
+        elif file_path.endswith(".txt"):
+            return TextLoader(file_path=file_path)
+        elif file_path.endswith(".docx"):
+            return Docx2txtLoader(file_path=file_path)
+        else:
+            raise ValueError(f"Unsupported file type: {file_path}")
+
     def load_document(self, file_path: str) -> bool:
         """
         Load document and create vector database
@@ -93,7 +102,7 @@ class RAGService:
                 self._initialize_components()
             
             # Load document
-            loader = PyPDFLoader(file_path)
+            loader = self.get_loader_documents(file_path)
             documents = loader.load()
             print(f"Loaded document: {file_path} ({len(documents)} pages)")
             
@@ -154,7 +163,7 @@ class RAGService:
             doc_id = str(uuid.uuid4())[:8]  # short ID
 
             # โหลดเอกสาร (ใช้โค้ดเดิมจาก load_document)
-            loader = PyPDFLoader(file_path)
+            loader = self.get_loader_documents(file_path)
             documents = loader.load()
 
             # แยก chunks
@@ -192,6 +201,7 @@ class RAGService:
         try:
             documents_list = []
             for doc_id, metadata in self.documents.items():
+                
                 documents_list.append({
                     "doc_id": doc_id,
                     "title": metadata["title"],
