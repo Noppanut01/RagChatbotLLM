@@ -1,7 +1,23 @@
 .DS_Store
-./backend/__pycache__
-venv
-.claude
-.vscode
+backend/__pycache__/
+backend/uploads/
+venv/
+.claude/
+.vscode/
 *.pdf
 backend/chroma_store/
+
+# Python bytecode
+*.pyc
+**/__pycache__/
+
+# Log files
+*.log
+
+# Database files
+*.sqlite3
+*.db
+
+# Temporary files
+*.tmp
+*.temp
