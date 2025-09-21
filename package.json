@@ -1,0 +1,22 @@
+{
+  "name": "ragchatbotllm",
+  "version": "1.0.0",
+  "description": "> Presented by Ojang and Little",
+  "main": "main.jsx",
+  "scripts": {
+  "start": "node main.jsx",
+  "test": "echo \"Error: no test specified\" && exit 1"
+}
+,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Noppanut01/RagChatbotLLM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Noppanut01/RagChatbotLLM/issues"
+  },
+  "homepage": "https://github.com/Noppanut01/RagChatbotLLM#readme"
+}
