@@ -144,17 +144,22 @@
 ## Progress Tracking
 
 ### Completed Items
-- [x] **Multi-document RAG working** ✅ (2025-09-03)
-- [x] **Document upload/management** ✅ (2025-09-06) - Basic upload with auto-loading
-- [x] **Code cleanup & optimization** ✅ (2025-09-06)
-- [x] **Auto-loading documents after upload** ✅ (2025-09-06)
-- [x] **Application lifecycle management** ✅ (2025-09-06)
-- [x] **Bug fixes & type safety** ✅ (2025-09-06)
-- [x] **Document Management APIs** ✅ (2025-09-13) - GET /documents/list, DELETE /documents/{id}
-- [x] **Enhanced Multi-Document RAG Service** ✅ (2025-09-03) - Day 3-4 complete
-- [x] **Core APIs** ✅ (2025-09-13) - Document management part of Day 5-7
-- [x] **File Upload System** ✅ (2025-09-20) - Upload + File validation + TXT/DOCX support
-- [x] **Document CRUD** ✅ (2025-09-13) - List/Delete part of Day 10-11
+- [x] **Multi-document RAG working** ✅
+- [x] **Document upload/management** ✅ - Basic upload with auto-loading
+- [x] **Code cleanup & optimization** ✅
+- [x] **Auto-loading documents after upload** ✅
+- [x] **Application lifecycle management** ✅
+- [x] **Bug fixes & type safety** ✅
+- [x] **Document Management APIs** ✅ - GET /documents/list, DELETE /documents/{id}
+- [x] **Enhanced Multi-Document RAG Service** ✅ - Day 3-4 complete
+- [x] **Core APIs** ✅ - Document management part of Day 5-7
+- [x] **File Upload System** ✅ - Upload + File validation + TXT/DOCX support
+- [x] **Document CRUD** ✅ - List/Delete part of Day 10-11
+- [x] **Admin Dashboard UI** ✅ - Document table, upload modal, delete functionality
+- [x] **Complete Document Delete** ✅ - Delete physical files + ChromaDB collections
+- [x] **Fix Duplicate Documents** ✅ - Auto-replace existing files on re-upload
+- [x] **Functional ChatBot Widget** ✅ - Working chat with loading animation
+- [x] **API Service Layer** ✅ - Complete chat/upload/delete APIs
 
 ### Partially Completed
 - [ ] **Day 5-7: Core APIs** ⚠️ (Document APIs ✅, Auth APIs ❌, Chat API with history ❌)
@@ -164,12 +169,12 @@
 **Foundation (Week 1-2):**
 - [ ] **PostgreSQL Setup** - Database models (User, Document, ChatHistory, PromptTemplate)
 - [ ] **Authentication system** - JWT login/register/roles APIs
-- [ ] **Fix Duplicate Documents** - Hash-based duplicate detection
+- [x] **Fix Duplicate Documents** - ✅ Auto-replace on re-upload
 - [ ] **Chat API with history** - Store conversations in PostgreSQL
 
 **User Interface (Week 3):**
-- [ ] **Admin dashboard** - Document management, user management, analytics
-- [ ] **Functional chat UI** - Replace placeholder with real chat interface
+- [x] **Admin dashboard** - ✅ Document management working
+- [x] **Functional chat UI** - ✅ ChatBot widget with API integration
 - [ ] **Login/Register pages** - Authentication UI
 - [ ] **Protected routes** - Role-based access control
 
@@ -182,24 +187,88 @@
 - [ ] **Production deployment** - Docker, environment setup
 
 ## Recent Milestones
-- **2025-09-03**: Multi-document RAG core completed
-- **2025-09-06**: File upload auto-loading & code cleanup completed
-- **2025-09-13**: Document Management APIs completed (GET/DELETE endpoints)
-- **2025-09-20**: File upload validation + TXT/DOCX support completed
+- Multi-document RAG core completed
+- File upload auto-loading & code cleanup completed
+- Document Management APIs completed (GET/DELETE endpoints)
+- File upload validation + TXT/DOCX support completed
+- **Latest Update**: Admin Dashboard + ChatBot Widget + Complete Delete + Duplicate Prevention completed
 
 ## Current Status Summary
-✅ **Working:** RAG system, Multi-document upload (PDF/TXT/DOCX), Document APIs, Source attribution
-⚠️ **Issues:** Duplicate documents, No database persistence, No authentication, Placeholder chat UI
-❌ **Critical Missing (จาก Proposal):** PostgreSQL, Auth system, Admin dashboard, Chat history, Analytics, Prompt templates
+✅ **Working:**
+- RAG system with multi-document search
+- Complete document management (upload/delete/replace)
+- Functional ChatBot widget with loading animation
+- Admin Dashboard with document table
+- Source attribution in responses
+- Auto-replace duplicate files
+
+⚠️ **Issues Fixed Today:**
+- ✅ Delete now removes physical files + ChromaDB
+- ✅ No more duplicate files
+- ✅ ChatBot API integration working
+- ✅ Admin Dashboard fully functional
+
+❌ **Critical Missing (จาก Proposal):**
+- PostgreSQL database
+- Authentication system
+- Chat history persistence
+- Analytics dashboard
+- Prompt template management
 
 ## Proposal Compliance Status
-📊 **Overall Progress:** ~65% complete
-✅ **RAG Core:** 90% (missing chat history storage)
-⚠️ **Backend APIs:** 60% (missing auth & chat history)
-❌ **Frontend UI:** 20% (basic structure only)
-❌ **Admin Features:** 10% (no dashboard, no analytics)
-❌ **Production Ready:** 30% (no auth, no persistence)
+📊 **Overall Progress:** ~75% complete (↑10% from last update)
+✅ **RAG Core:** 95% (working perfectly, missing only chat history storage)
+✅ **Backend APIs:** 80% (upload/delete/chat working, missing auth & history)
+✅ **Frontend UI:** 70% (ChatBot + Admin Dashboard working, missing auth pages)
+✅ **Admin Features:** 60% (document management working, missing analytics)
+❌ **Production Ready:** 40% (functional but no auth, no persistence)
+
+## Detailed Changes - 2025-10-30
+
+### Backend Improvements
+1. **Complete Document Deletion** ([rag_service.py:222-262](backend/rag_service.py))
+   - Delete from ChromaDB collections
+   - Delete physical files from uploads/
+   - Remove from memory
+
+2. **Duplicate File Prevention** ([app.py:161-208](backend/app.py))
+   - Check for existing files by filename
+   - Auto-remove old version before upload
+   - Prevent duplicate documents in RAG service
+
+3. **Fixed Upload Logic**
+   - Separated file save and load steps
+   - No more duplicate loading in loops
+   - Proper error handling
+
+### Frontend Improvements
+1. **Admin Dashboard** ([Dashboard.jsx](frontend/src/pages/admin/Dashboard.jsx))
+   - Complete upload/delete functionality
+   - Data transformation for display
+   - Refresh after operations
+
+2. **ChatBot Widget** ([ChatBot.jsx](frontend/src/components/user/ChatBot.jsx))
+   - Working API integration
+   - Loading animation (ThreeDots)
+   - Disabled state during fetch
+   - Enter key support
+
+3. **Document Table** ([DocumentTable.jsx](frontend/src/components/admin/DocumentTable.jsx))
+   - Simplified to show only essential columns
+   - Clean, professional styling
+
+4. **API Service** ([apis.js](frontend/src/services/apis.js))
+   - Fixed all API endpoints
+   - Proper data handling
+   - Support for multiple file upload
+
+### Bug Fixes
+- ✅ Fixed `currentQuestion` undefined error
+- ✅ Fixed `res.data.answer` → `res.answer`
+- ✅ Fixed empty delete function
+- ✅ Fixed duplicate confirmation dialogs
+- ✅ Fixed file loading in loops
 
 ---
 **Created**: 2025-08-31
-**Last Updated**: 2025-09-20 (Post-Proposal Analysis)
+**Last Updated**: 2025-10-30 (Major UI/UX Update)

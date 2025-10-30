@@ -4,29 +4,27 @@
 นี้คือโปรเจคปริญญานิพนธ์ "Web Application for Retrieval-Augmented Generation for Information Assistance"
 ระบบตอบคำถามทั่วไปจากเอกสารที่ Admin อัปโหลด (ไม่จำกัดหัวข้อ)
 
-## Current Project Status (เมื่อเริ่มใหม่ให้อ่านไฟล์นี้) - อัปเดต 2025-09-13
+## Current Project Status (เมื่อเริ่มใหม่ให้อ่านไฟล์นี้) - Latest Update
 
-### ✅ สิ่งที่มีอยู่แล้ว
+### ✅ สิ่งที่มีอยู่แล้ว (ทำงานได้แล้ว)
 1. **Backend**: FastAPI + **Multi-Document RAG Service** ✅
 2. **RAG Core**: LangChain + Ollama (llama3.2) + ChromaDB ✅
 3. **Multi-Document RAG support** ✅ - รองรับหลายเอกสารพร้อมกัน
 4. **Source attribution** ✅ - แสดงแหล่งที่มาของคำตอบ
-5. **Document Management APIs** ✅ - GET /documents/list, DELETE /documents/{id}
-6. **File Upload System** ✅ - POST /upload/ พร้อม auto-loading
-7. **Document CRUD** ✅ - List และ Delete เอกสาร
-8. **Frontend**: React skeleton (ยังไม่มี functionality)
-
-### ⚠️ สิ่งที่ทำไปบางส่วน
-1. **File Upload System** - มี upload พื้นฐาน แต่ยังไม่มี validation และรองรับแค่ PDF
-2. **Document Management** - มี list/delete แต่ยังไม่มี search/filter/reprocessing
+5. **Document Management APIs** ✅ - GET /documents/list, DELETE /documents/{id} (ลบทั้งไฟล์+DB)
+6. **File Upload System** ✅ - POST /upload/ รองรับ PDF/TXT/DOCX พร้อม auto-replace duplicate
+7. **Document CRUD** ✅ - List, Upload, Delete เอกสารครบ
+8. **Admin Dashboard** ✅ - Document table, Upload modal, Delete functionality
+9. **ChatBot Widget** ✅ - ทำงานได้เต็มรูปแบบ พร้อม loading animation
+10. **API Service Layer** ✅ - Frontend APIs สำหรับ chat/upload/delete
 
 ### ❌ สิ่งที่ยังขาด
-1. **PostgreSQL database** - ยังไม่ได้ setup
+1. **PostgreSQL database** - ยังไม่ได้ setup (ใช้ ChromaDB อย่างเดียว)
 2. **Authentication system** - ยังไม่มี JWT, login/register
-3. **Admin dashboard** - ยังไม่มีเลย
-4. **Functional chat UI** - ตอนนี้แค่ "Hello Chatbot"
-5. **User Management** - ยังไม่มี roles, sessions
-6. **File validation** - ยังไม่มี validation สำหรับ TXT, DOCX
+3. **Chat history** - ไม่มีการเก็บประวัติการสนทนา
+4. **User Management** - ยังไม่มี roles, sessions
+5. **Analytics Dashboard** - ยังไม่มีสถิติการใช้งาน
+6. **Prompt Template Management** - ยังไม่มี
 
 ## Technology Stack ที่ตกลงใช้
 - Backend: Python + FastAPI + SQLAlchemy + PostgreSQL
@@ -35,18 +33,20 @@
 - Auth: JWT-based authentication
 
 ## Development Priority (30 วัน) - ความคืบหน้าปัจจุบัน
-1. **Week 1**: Database + Backend APIs ⚠️ (บางส่วน - ข้าม PostgreSQL, ทำ Document APIs แล้ว)
-2. **Week 2**: Document Management System ⚠️ (บางส่วน - File Upload + CRUD พื้นฐานเสร็จแล้ว)  
-3. **Week 3**: Frontend Development ❌ (ยังไม่เริ่ม)
-4. **Week 4**: Integration + Advanced Features ❌ (ยังไม่เริ่ม)
+1. **Week 1**: Database + Backend APIs ⚠️ (ข้าม PostgreSQL, Document APIs เสร็จแล้ว)
+2. **Week 2**: Document Management System ✅ (File Upload + CRUD เสร็จแล้ว)
+3. **Week 3**: Frontend Development ✅ (Admin Dashboard + ChatBot ทำงานได้แล้ว)
+4. **Week 4**: Integration + Advanced Features ❌ (ยังไม่เริ่ม - Auth, Analytics, History)
 
-## สถานะปัจจุบัน (2025-09-13)
-- ✅ **Day 3-4**: Multi-Document RAG Service เสร็จแล้ว
-- ✅ **Day 5-7**: Document Management APIs เสร็จแล้ว (บางส่วน)
-- ⚠️ **Day 8-9**: File Upload System เสร็จบางส่วน
-- ⚠️ **Day 10-11**: Document CRUD เสร็จบางส่วน
-- ❌ **Day 1-2**: PostgreSQL Setup ยังไม่ได้ทำ
-- ❌ **Day 12-14**: User Management ยังไม่ได้ทำ
+## สถานะปัจจุบัน
+- ✅ **Multi-Document RAG Service** - เสร็จสมบูรณ์
+- ✅ **Document Management APIs** - List/Upload/Delete ครบ
+- ✅ **File Upload System** - รองรับ PDF/TXT/DOCX + duplicate prevention
+- ✅ **Document CRUD** - เสร็จสมบูรณ์
+- ✅ **Admin Dashboard** - Document management UI ทำงานได้
+- ✅ **ChatBot Widget** - Chat interface พร้อม loading animation
+- ❌ **PostgreSQL Setup** - ยังไม่ได้ทำ
+- ❌ **User Management** - ยังไม่ได้ทำ
 
 ## Key Requirements จาก Proposal
 1. Admin สามารถอัปโหลด/จัดการเอกสารทุกประเภท (ไม่จำกัดหัวข้อ)
@@ -76,18 +76,27 @@ cd backend
 pip install -r requirements.txt
 ```
 
-### Frontend  
+### Frontend
 ```bash
-cd rag-chatbot
+cd frontend
 npm install
 ```
 
 ## Commands สำคัญ
-- Backend: `uvicorn app:app --reload`
-- Frontend: `npm run dev`
-- Database: ยังไม่ได้ setup
+- Backend: `cd backend && uvicorn app:app --reload`
+- Frontend: `cd frontend && npm run dev`
+- Ollama: `ollama serve` (ต้องรันก่อนเสมอ)
+
+## ไฟล์สำคัญที่อัพเดตแล้ว
+- `backend/app.py` - Upload/Delete endpoints พร้อม duplicate prevention
+- `backend/rag_service.py` - Complete delete (file + ChromaDB)
+- `frontend/src/services/apis.js` - All API endpoints working
+- `frontend/src/pages/admin/Dashboard.jsx` - Full document management
+- `frontend/src/components/user/ChatBot.jsx` - Working chat with loading
+- `frontend/src/components/admin/DocumentTable.jsx` - Simplified table
+- `frontend/src/components/admin/UploadModal.jsx` - Multi-file upload
 
 ---
 **คำแนะนำ**: เมื่อเริ่ม session ใหม่ ให้อ่านไฟล์นี้และ PROJECT_ROADMAP.md เพื่อทำความเข้าใจสถานะปัจจุบันของโปรเจค
 
-**อัปเดตล่าสุด**: 2025-09-13 - Multi-Document RAG และ Document Management APIs ทำงานได้แล้ว
+**อัปเดตล่าสุด**: Admin Dashboard + ChatBot Widget เสร็จสมบูรณ์ พร้อมใช้งานได้แล้ว
