@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Book, FileText, Download, ExternalLink, Users, Award, TrendingUp, Lightbulb, Sprout, Bug, AlertCircle, Leaf } from 'lucide-react';
-import { knowledgeData } from '../data/knowledgeData';
+import { knowledgeData } from '../../data/knowledgeData';
 
 const Knowledge = () => {
   const [activeCategory, setActiveCategory] = useState('cultivation');
@@ -50,7 +50,7 @@ const Knowledge = () => {
             ฐาน<span className="text-orange-500">ความรู้</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            ศูนย์รวมความรู้เกี่ยวกับข้าวไทยอย่างครบถ้วน ตั้งแต่การปลูก การแปรรูป 
+            ศูนย์รวมความรู้เกี่ยวกับข้าวไทยอย่างครบถ้วน ตั้งแต่การปลูก การแปรรูป
             ไปจนถึงงานวิจัยและเทคโนโลยีล่าสุด พร้อมข้อมูลที่เชื่อถือได้จากผู้เชี่ยวชาญ
           </p>
         </div>
@@ -88,11 +88,10 @@ const Knowledge = () => {
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-300 ${
-                  activeCategory === category.id
+                className={`flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-300 ${activeCategory === category.id
                     ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg transform scale-105'
                     : 'bg-white/70 text-gray-600 hover:bg-white hover:text-orange-600 shadow-md'
-                }`}
+                  }`}
               >
                 <IconComponent className="w-5 h-5" />
                 {category.label}
@@ -114,9 +113,8 @@ const Knowledge = () => {
                     {[...Array(5)].map((_, i) => (
                       <div
                         key={i}
-                        className={`w-3 h-3 rounded-full ${
-                          i < Math.floor(item.rating) ? 'bg-yellow-400' : 'bg-gray-200'
-                        }`}
+                        className={`w-3 h-3 rounded-full ${i < Math.floor(item.rating) ? 'bg-yellow-400' : 'bg-gray-200'
+                          }`}
                       />
                     ))}
                   </div>
@@ -127,7 +125,7 @@ const Knowledge = () => {
               <h3 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-orange-600 transition-colors">
                 {item.title}
               </h3>
-              
+
               <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed text-sm">
                 {item.description}
               </p>

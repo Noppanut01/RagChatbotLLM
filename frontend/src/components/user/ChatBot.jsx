@@ -1,14 +1,19 @@
 import React, { useEffectEvent, useState } from 'react';
 import { MessageCircle, X, Send, Bot } from 'lucide-react';
-import axios from 'axios';
-
+import { ThreeDots } from 'react-loader-spinner';
+import { chatAPI } from '../../services/apis';
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([{
+    id: 0,
+    type: 'bot',
+    message: 'สวัสดีครับ! ผมคือผู้ช่วยข้าวไทย พร้อมตอบคำถามเกี่ยวกับข้าวไทยให้คุณครับ'
+  }]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isLoading) return;
 
     // Add user message
     const userMessage = {
@@ -20,17 +25,14 @@ const ChatBot = () => {
 
     const currentQuestion = inputMessage;
     setInputMessage('');
+    setIsLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:8000/prompt', {
-        question: currentQuestion
-      });
-
-      // Add bot response
+      const response = await chatAPI.sendMessage(currentQuestion);
       const botMessage = {
         id: messages.length + 2,
         type: 'bot',
-        message: res.data.answer || 'ขออภัย ไม่สามารถหาคำตอบได้'
+        message: response.answer || 'ขออภัย ไม่สามารถหาคำตอบได้'
       };
       setMessages(prev => [...prev, botMessage]);
 
@@ -44,6 +46,8 @@ const ChatBot = () => {
         message: 'ขออภัย เกิดข้อผิดพลาดในการเชื่อมต่อ'
       };
       setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
   }
   return (
@@ -104,6 +108,22 @@ const ChatBot = () => {
                 </div>
               </div>
             ))}
+
+            {/* Loading Animation */}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-white p-3 rounded-2xl shadow-sm border">
+                  <ThreeDots
+                    height="25"
+                    width="40"
+                    radius="7"
+                    color="#f97316"
+                    ariaLabel="three-dots-loading"
+                    visible={true}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input */}
@@ -113,11 +133,15 @@ const ChatBot = () => {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="พิมพ์ข้อความ..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                disabled={isLoading}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
-              <button onClick={handleSendMessage}
-                className="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl flex items-center justify-center hover:from-orange-600 hover:to-amber-600 transition-all duration-300"
+              <button
+                onClick={handleSendMessage}
+                disabled={isLoading || !inputMessage.trim()}
+                className="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl flex items-center justify-center hover:from-orange-600 hover:to-amber-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
               </button>

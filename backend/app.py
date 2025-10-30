@@ -158,30 +158,53 @@ async def prompt(query: Query):
         )
 
 
-@app.post("/upload/")
+@app.post("/upload")
 async def create_upload_files(files: List[UploadFile] = File(...)):
     uploaded_filenames = []
-    
+
+    # First, save all files to disk
     for file in files:
         filename = file.filename
-    
+
         if not filename.endswith(('.pdf', '.txt', '.docx')):
             raise HTTPException(status_code=400, detail=f"Unsupported filetype: {filename}")
-    
+
         file_path = f"{path}/{filename}"
-    
-        # Save file to disk
+
+        # Check if file already exists and remove old version
+        existing_doc_id = None
+        for doc_id, metadata in rag_service.documents.items():
+            if metadata["title"] == filename:
+                existing_doc_id = doc_id
+                break
+
+        if existing_doc_id:
+            print(f"Found duplicate file: {filename}, removing old version (ID: {existing_doc_id})")
+            result = rag_service.remove_document(existing_doc_id)
+            if not result["success"]:
+                print(f"Warning: Failed to remove old document: {result.get('error')}")
+
+        # Save file to disk (overwrite if exists)
         with open(file_path, "wb") as buffer:
             buffer.write(await file.read())
         uploaded_filenames.append(filename)
-        
-        # Load document into RAG service immediately
-        
 
-        loadFiles(uploaded_filenames)
-    
+    # Then, load all files into RAG service at once
+    loaded_count = 0
+    for filename in uploaded_filenames:
+        try:
+            file_path = f"{path}/{filename}"
+            result = rag_service.add_document(file_path)
+            if result["success"]:
+                loaded_count += 1
+                print(f"Loaded: {result['title']} (ID: {result['doc_id']})")
+            else:
+                print(f"Failed to load {filename}: {result.get('error')}")
+        except Exception as e:
+            print(f"Error loading {filename}: {str(e)}")
+
     return {
-        "message": f"Successfully uploaded files: {', '.join(uploaded_filenames)}",
+        "message": f"Successfully uploaded {loaded_count}/{len(uploaded_filenames)} files",
         "loaded_documents": uploaded_filenames
     }
 

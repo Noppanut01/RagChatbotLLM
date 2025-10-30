@@ -220,21 +220,41 @@ class RAGService:
             return {"success": False, "error": str(e)}
     
     def remove_document(self, doc_id: str) -> Dict[str, Any]:
-        """ลบเอกสาร"""
+        """ลบเอกสาร (ลบทั้งไฟล์, vectorstore, และ metadata)"""
         try:
             if doc_id not in self.vectorstores:
                 return {"success": False, "error": f"Document {doc_id} not found"}
-            
-            # Remove from memory
-            del self.vectorstores[doc_id]
+
             title = self.documents[doc_id]["title"]
+            file_path = self.documents[doc_id].get("file_path")
+
+            # 1. Delete from ChromaDB
+            try:
+                collection_name = f"doc_{doc_id}"
+                vectorstore = self.vectorstores[doc_id]
+                # Delete the entire collection
+                vectorstore.delete_collection()
+                print(f"Deleted ChromaDB collection: {collection_name}")
+            except Exception as e:
+                print(f"Warning: Could not delete ChromaDB collection: {str(e)}")
+
+            # 2. Delete physical file
+            if file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    print(f"Deleted physical file: {file_path}")
+                except Exception as e:
+                    print(f"Warning: Could not delete file {file_path}: {str(e)}")
+
+            # 3. Remove from memory
+            del self.vectorstores[doc_id]
             del self.documents[doc_id]
-            
-            print(f"Removed document: {doc_id} ({title})")
+
+            print(f"Successfully removed document: {doc_id} ({title})")
             print(f"Remaining documents: {len(self.vectorstores)}")
-            
+
             return {
-                "success": True, 
+                "success": True,
                 "message": f"Document '{title}' removed successfully",
                 "remaining": len(self.vectorstores)
             }
